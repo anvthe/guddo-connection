@@ -9,51 +9,68 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("An unexpected error occurred: " + ex.getMessage());
+    private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("statusCode", status.value());
+        body.put("status", false);
+        body.put("message", message);
+        return ResponseEntity.status(status).body(body);
     }
+
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleException(Exception ex) {
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred: " + ex.getMessage());
+    }
+
 
     @ExceptionHandler(ChangeSetPersister.NotFoundException.class)
-    public ResponseEntity<String> handleNotFoundException(ChangeSetPersister.NotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("Resource not found: " + ex.getMessage());
+    public ResponseEntity<Map<String, Object>> handleNotFoundException(ChangeSetPersister.NotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND,
+                "Resource not found: " + ex.getMessage());
     }
+
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> customValidationErrorHandling(MethodArgumentNotValidException ex) {
-        return ResponseEntity.badRequest().body(ex.getBindingResult().getAllErrors().get(0).getDefaultMessage());
+    public ResponseEntity<Map<String, Object>> handleValidationError(MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getAllErrors().get(0).getDefaultMessage();
+        return buildResponse(HttpStatus.BAD_REQUEST, message);
     }
+
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<String> handleBadCredentials(BadCredentialsException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body("Username or password is incorrect. Try again!!");
+    public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Email or password is incorrect. Try again!!");
     }
+
 
     @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<String> handleUsernameNotFound(UsernameNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body("Invalid user, please try again.");
+    public ResponseEntity<Map<String, Object>> handleUsernameNotFound(UsernameNotFoundException ex) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Invalid user, please try again.");
     }
+
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<String> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ex.getMessage());
+    public ResponseEntity<Map<String, Object>> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+
     @ExceptionHandler(IncorrectCurrentPasswordException.class)
-    public ResponseEntity<Map<String,String>> handleIncorrectCurrentPassword(IncorrectCurrentPasswordException ex) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Collections.singletonMap("error", ex.getMessage()));
+    public ResponseEntity<Map<String, Object>> handleIncorrectCurrentPassword(IncorrectCurrentPasswordException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
 }

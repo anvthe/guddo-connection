@@ -1,4 +1,4 @@
-package connection.guddo.dto;
+package connection.guddo.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthenticationResponseDTO {
+public class TokenResponse {
 
     private String token;
 

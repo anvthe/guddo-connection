@@ -2,6 +2,8 @@ package connection.guddo.controller;
 
 import connection.guddo.WebApiUrlConstants.WebApiUrlConstants;
 import connection.guddo.dto.*;
+import connection.guddo.response.ApiResponse;
+import connection.guddo.response.TokenResponse;
 import connection.guddo.service.AuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,12 +28,18 @@ public class AuthenticationController {
 
     //registration
     @PostMapping(WebApiUrlConstants.USER_REGISTER_API)
-    public ResponseEntity<?> register(@RequestBody @Valid RegisterRequestDTO request, HttpServletRequest httpRequest) {
+    public ResponseEntity<ApiResponse<?>> register(@RequestBody @Valid RegisterRequestDTO request, HttpServletRequest httpRequest) {
 
         String appUrl = getAppUrl(httpRequest);
         authService.register(request, appUrl);
 
-        return ResponseEntity.ok("Account created successfully. Please check your email to verify your account.");
+        ApiResponse<?> response = ApiResponse.builder()
+                .statusCode(HttpStatus.OK.value())
+                .status(true)
+                .message("Account created successfully. Please check your email to verify your account.")
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     private String getAppUrl(HttpServletRequest request) {
@@ -58,20 +66,33 @@ public class AuthenticationController {
 
 
     //login
+//    @PostMapping(WebApiUrlConstants.USER_LOGIN_API)
+//    public ResponseEntity<?> authenticate(@RequestBody @Valid AuthenticationRequestDTO request) {
+//        try {
+//            String jwt = authService.authenticate(request);
+//            return ResponseEntity.ok(jwt);
+//        } catch (IllegalArgumentException | IllegalStateException ex) {
+//
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+//        } catch (Exception ex) {
+//
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body("An unexpected error occurred. Please try again later.");
+//        }
+//    }
+
     @PostMapping(WebApiUrlConstants.USER_LOGIN_API)
     public ResponseEntity<?> authenticate(@RequestBody @Valid AuthenticationRequestDTO request) {
-        try {
-            String jwt = authService.authenticate(request);
-            return ResponseEntity.ok(jwt);
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
-        } catch (Exception ex) {
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("An unexpected error occurred. Please try again later.");
-        }
+        String jwt = authService.authenticate(request);
+        ApiResponse<TokenResponse> response = new ApiResponse<>(
+                HttpStatus.OK.value(),
+                true,
+                new TokenResponse(jwt),
+                "Login successful"
+        );
+        return ResponseEntity.ok(response);
     }
+
 
 
     //update password
