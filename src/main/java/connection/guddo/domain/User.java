@@ -53,6 +53,7 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Builder.Default
     private boolean enabled = false;
 
     @Column(name = "provider")
